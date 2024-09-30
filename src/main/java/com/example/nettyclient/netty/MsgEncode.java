@@ -1,9 +1,12 @@
 package com.example.nettyclient.netty;
 
 import com.example.nettyclient.netty.pb.MSG;
-import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
-import io.grpc.netty.shaded.io.netty.handler.codec.MessageToByteEncoder;
+//import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
+//import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
+//import io.grpc.netty.shaded.io.netty.handler.codec.MessageToByteEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
 import org.springframework.stereotype.Component;
 
 /**

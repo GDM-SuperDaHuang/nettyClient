@@ -1,15 +1,14 @@
 package com.example.nettyclient.netty;
 
-import java.net.InetSocketAddress;
 
 import com.example.nettyclient.netty.pb.MSG;
-import io.grpc.netty.shaded.io.netty.bootstrap.Bootstrap;
-import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-import io.grpc.netty.shaded.io.netty.buffer.Unpooled;
-import io.grpc.netty.shaded.io.netty.channel.*;
-import io.grpc.netty.shaded.io.netty.channel.nio.NioEventLoopGroup;
-import io.grpc.netty.shaded.io.netty.channel.socket.SocketChannel;
-import io.grpc.netty.shaded.io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +23,7 @@ public class NetClient {
 
     @PostConstruct
     public void init() throws Exception {
-        System.out.println("==================");
+        System.out.println("初始化");
         start();
     }
     public void start() throws Exception {
@@ -35,9 +34,6 @@ public class NetClient {
             Bootstrap b = new Bootstrap();
             b.group(group)
                     .channel(NioSocketChannel.class)
-//                    .option(ChannelOption.SO_KEEPALIVE, true)
-                    //使用指定的端口设置套接字地址
-//                    .localAddress(new InetSocketAddress(9000))// 使用 NIO 的通道类型
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
@@ -53,41 +49,38 @@ public class NetClient {
             if (f.isSuccess()){
                 channel = f.channel();
                 if (channel.isActive()) {
-                    // 发送数据到服务器
-                    System.out.println("888888888888888888888");
+                    for (int i = 0; i < 10; i++) {
+                        // 发送数据到服务器
+                        System.out.println("发送数据到服务器");
+                        ByteBuf buf = Unpooled.buffer();
+                        // 1. 8 字节session
+                        buf.writeLong(111222333);
+                        //消息id
+                        buf.writeInt(1);
+                        //压缩标志
+                        buf.writeByte(0);
+                        //版本
+                        buf.writeByte(3);
 
-                    ByteBuf buf = Unpooled.buffer();
-                    // 1. 8 字节session
-                    buf.writeLong(1111111111L);
-                    //消息id
-                    buf.writeInt(0);
-                    //压缩标志
-                    buf.writeByte(0);
-                    //版本
-                    buf.writeByte(3);
+                        MSG.LoginRequest loginRequest = MSG.LoginRequest.newBuilder()
+                                .setUsername("大黄")
+                                .setPassword("123213")
+                                .buildPartial();
 
-                    MSG.LoginRequest loginRequest = MSG.LoginRequest.newBuilder()
-                            .setUsername("大黄")
-                            .setPassword("123213")
-                            .buildPartial();
-
-                    byte[] byteArray = loginRequest.toByteArray();
-                    int length = byteArray.length;
-                    buf.writeShort(length);
-                    //消息体
-                    buf.writeBytes(byteArray);
-
-                    channel.writeAndFlush(buf);
+                        byte[] byteArray = loginRequest.toByteArray();
+                        int length = byteArray.length;
+                        buf.writeShort(length);
+                        //消息体
+                        buf.writeBytes(byteArray);
+                        channel.writeAndFlush(buf);
+                    }
 
                 }
             }
             channel.closeFuture().sync();
-        }catch (Exception e){
-
-        }
-        finally {
+        } finally {
             // 优雅地关闭
-//            group.shutdownGracefully().sync();
+            group.shutdownGracefully().sync();
         }
     }
 

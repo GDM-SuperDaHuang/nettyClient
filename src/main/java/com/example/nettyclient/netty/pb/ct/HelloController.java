@@ -2,9 +2,9 @@ package com.example.nettyclient.netty.pb.ct;
 
 import com.example.nettyclient.netty.NetClient;
 import com.example.nettyclient.netty.pb.MSG;
-import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-import io.grpc.netty.shaded.io.netty.buffer.Unpooled;
-import io.grpc.netty.shaded.io.netty.channel.Channel;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

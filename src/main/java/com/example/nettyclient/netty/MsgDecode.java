@@ -1,8 +1,9 @@
 package com.example.nettyclient.netty;
 
-import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
-import io.grpc.netty.shaded.io.netty.handler.codec.ByteToMessageDecoder;
+import com.example.nettyclient.netty.pb.MSG;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.ByteToMessageDecoder;
 import org.springframework.stereotype.Component;
 
 
@@ -46,7 +47,8 @@ public class MsgDecode extends ByteToMessageDecoder {
         byte[] bytes = new byte[length];
         // 6. 读取protobuf字节数组
         in.readBytes(bytes, 0, length);
-        out.add(bytes);
+        MSG.LoginResponse loginResponse = MSG.LoginResponse.parseFrom(bytes);
+        out.add(loginResponse);
     }
 
 
