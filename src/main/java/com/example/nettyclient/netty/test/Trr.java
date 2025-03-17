@@ -18,6 +18,7 @@ import java.util.Scanner;
 
 public class Trr {
     Channel channel;
+    int serverPort = 8888;
 
     public void start() throws Exception {
         EventLoopGroup group = new NioEventLoopGroup();
@@ -28,19 +29,21 @@ public class Trr {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline p = ch.pipeline();
-                        p.addLast("log", new LoggingHandler(LogLevel.INFO));
+//                        p.addLast("log", new LoggingHandler(LogLevel.INFO));
                         p.addLast(new MsgDecode());
                         p.addLast(new MsgEncode());
                         p.addLast(new Myhandle());
                     }
                 });
         try {
-            ChannelFuture f = b.connect("127.0.0.1", 8999).sync();
+            ChannelFuture f = b.connect("127.0.0.1", serverPort).sync();
             channel = f.channel();
             new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (true) {
                     System.out.println("请输入消息（输入'exit'退出）:");
+                    int protoId = scanner.nextInt();
+                    scanner.nextLine(); // 消耗换行符
                     String next = scanner.nextLine();
                     if ("exit".equals(next)) {
                         try {
@@ -50,7 +53,7 @@ public class Trr {
                         }
                         break; // 退出循环
                     }
-                    sendMsg(next);
+                    sendMsg(protoId, next);
                 }
                 scanner.close(); // 关闭扫描器
             }).start();
@@ -63,23 +66,33 @@ public class Trr {
         }
     }
 
-    private void sendMsg(String message) {
+    private void sendMsg(int protoId, String message) {
         ByteBuf buf = Unpooled.buffer();
 
         // 1. 8 字节session
-        buf.writeLong(111222333);
+        buf.writeInt(110);
+        buf.writeInt(0);
         //消息id
-        buf.writeInt(1);
+        buf.writeInt(protoId);
         //压缩标志
         buf.writeByte(0);
         //版本
         buf.writeByte(3);
-        MSG.LoginRequest loginRequest = MSG.LoginRequest.newBuilder()
-                .setUsername("大号"+message)
-                .setPassword("123456"+message)
-                .buildPartial();
+        byte[] byteArray = null;
+        if (protoId == 1) {
+            MSG.LoginRequest loginRequest = MSG.LoginRequest.newBuilder()
+                    .setUsername("大号" + message)
+                    .setPassword("123456" + message)
+                    .buildPartial();
+            byteArray = loginRequest.toByteArray();
+        }else if (protoId == 2){
+            MSG.FriendRequest friendRequest = MSG.FriendRequest.newBuilder()
+                    .setUserId(1313L)
+                    .buildPartial();
+            byteArray = friendRequest.toByteArray();
+        }
 
-        byte[] byteArray = loginRequest.toByteArray();
+
         int length = byteArray.length;
         buf.writeShort(length);
         //消息体

@@ -1,9 +1,6 @@
 package com.example.nettyclient.netty;
 
-import com.example.nettyclient.netty.pb.MSG;
-//import io.grpc.netty.shaded.io.netty.buffer.ByteBuf;
-//import io.grpc.netty.shaded.io.netty.channel.ChannelHandlerContext;
-//import io.grpc.netty.shaded.io.netty.handler.codec.MessageToByteEncoder;
+import com.example.nettyclient.netty.message.ByteBufferMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -13,23 +10,25 @@ import org.springframework.stereotype.Component;
  * 确保之前的包完整性
  */
 @Component
-public class MsgEncode extends MessageToByteEncoder<MSG.LoginRequest> {
+public class MsgEncode extends MessageToByteEncoder<ByteBufferMessage> {
     @Override
-    protected void encode(ChannelHandlerContext ctx, MSG.LoginRequest msg, ByteBuf out) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, ByteBufferMessage msg, ByteBuf out) throws Exception {
         System.out.println("99999999999999999999999");
-//        ByteBuf out = ctx.alloc().buffer();
-        //8 字节session
-        out.writeLong(1111111111L);
-        //消息id
-        out.writeInt(1);
-        //压缩标志
-        out.writeByte(0);
-        //版本
-        out.writeByte(3);
-        byte[] byteArray = msg.toByteArray();
-        int length = byteArray.length;
-        out.writeShort(length);
-        out.writeBytes(byteArray);
-        ctx.writeAndFlush(out);
+
+        // 写入消息头
+//        out.writeLong(msg.getSessionId());      // 8字节
+        out.writeInt(msg.getCid());      // 4字节
+        out.writeInt(msg.getErrorCode());      // 4字节
+
+        out.writeInt(msg.getProtocolId());      // 4字节
+        out.writeByte(0);                       // zip压缩标志，1字节
+        out.writeByte(1);                       // pb版本，1字节
+
+        // 获取消息体长度并写入
+        int length = msg.getByteBuffer().remaining();
+        out.writeShort(length);                 // 消息体长度，2字节
+
+        // 写入消息体
+        out.writeBytes(msg.getByteBuffer());
     }
 }

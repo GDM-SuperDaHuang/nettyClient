@@ -1,5 +1,6 @@
 package com.example.nettyclient.netty;
 
+import com.example.nettyclient.netty.message.ByteBufferMessage;
 import com.example.nettyclient.netty.pb.MSG;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -7,6 +8,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import org.springframework.stereotype.Component;
 
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -19,33 +21,35 @@ public class MsgDecode extends ByteToMessageDecoder {
     //入
     @Override
     protected void decode(ChannelHandlerContext cxt, ByteBuf in, List<Object> out) throws Exception {
-        if (in.readableBytes() < 16) { // 确保有足够的字节来读取头部
+        // 确保有足够的字节来读取头部
+        if (in.readableBytes() < 16) {
             return;
         }
-        //消息头
-        //sessionId
-        long sessionId = in.readLong();
-        //协议id
+        // 缓存 readableBytes 不够则暂时到局部变量
+        int readableBytes = in.readableBytes();
+
+        // 消息头
+//        long sessionId = in.readLong();
+        int cid = in.readInt();
+        int errorCode = in.readInt();
+
         int protocolId = in.readInt();
-        // 压缩标志
         byte zip = in.readByte();
-        //版本
         byte pbVersion = in.readByte();
-        //长度
         short length = in.readShort();
-
-        if (in.readableBytes() < length) {//长度不够继续等待
+        // 检查是否有足够的字节来读取整个消息体
+        if (readableBytes < 16 + length) {
+            // 如果没有，丢弃已经读取的头部信息，并返回
+            in.readerIndex(in.readerIndex() - 16);
             return;
         }
-
-        //消息体
-        byte[] bytes = new byte[length];
-        // 6. 读取protobuf字节数组
-        in.readBytes(bytes, 0, length);
-        MSG.LoginResponse loginResponse = MSG.LoginResponse.parseFrom(bytes);
-        out.add(loginResponse);
+        ByteBuf messageBody = in.readBytes(length);
+        ByteBuffer byteBuffer = messageBody.nioBuffer();
+        ByteBufferMessage byteBufferMessage = new ByteBufferMessage(cid, errorCode, protocolId, byteBuffer);
+        out.add(byteBufferMessage);
+        //释放 messageBody 的引用
+        messageBody.release();
     }
-
 
 
 }
