@@ -79,12 +79,15 @@ public class Trr {
                 byteArray = loginRequest.toByteArray();
                 buildClientMsgAndSend(1, 0, protoId, zip, encrypted, byteArray);
             }
-        } else if (protoId == 20) {
-            Friend.FriendRequest friendRequest = Friend.FriendRequest.newBuilder()
-                    .setUserId(Long.valueOf(message))
-                    .buildPartial();
-            byteArray = friendRequest.toByteArray();
-            buildClientMsgAndSend(1, 0, protoId, zip, encrypted, byteArray);
+        } else if (protoId == 101) {
+            for (int i = 0; i < 10000; i++) {
+                Friend.FriendRequest friendRequest = Friend.FriendRequest.newBuilder()
+                        .setUserId(Long.valueOf(message))
+                        .buildPartial();
+                byteArray = friendRequest.toByteArray();
+                buildClientMsgAndSend(1, 0, protoId, zip, encrypted, byteArray);
+            }
+
         }
 
     }
