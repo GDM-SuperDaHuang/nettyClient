@@ -1,4 +1,4 @@
-package com.example.nettyclient.netty.message;
+package com.netty.message;
 
 import java.nio.ByteBuffer;
 

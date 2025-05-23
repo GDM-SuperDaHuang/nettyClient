@@ -1,18 +1,17 @@
-package com.example.nettyclient.netty.test;
+package com.netty.test;
 
-import com.example.nettyclient.netty.MsgDecode;
-import com.example.nettyclient.netty.MsgEncode;
-import com.example.nettyclient.netty.Myhandle;
-import com.example.nettyclient.netty.pb.MSG;
+import com.netty.message.MsgDecode;
+import com.netty.message.MsgEncode;
+import com.netty.Myhandle;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import message.Friend;
+import message.Login;
 
 import java.util.Scanner;
 
@@ -41,11 +40,11 @@ public class Trr {
             new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (true) {
-                    System.out.println("请输入消息（输入'exit'退出）:");
+                    System.out.println("请输入protoId,（输入'q'退出）:");
                     int protoId = scanner.nextInt();
                     scanner.nextLine(); // 消耗换行符
                     String next = scanner.nextLine();
-                    if ("exit".equals(next)) {
+                    if ("q".equals(next)) {
                         try {
                             channel.close().sync(); // 用户输入'exit'时关闭 Channel 并等待关闭完成
                         } catch (InterruptedException e) {
@@ -67,45 +66,55 @@ public class Trr {
     }
 
     private void sendMsg(int protoId, String message) {
-        ByteBuf buf = Unpooled.buffer();
-
-        // 1. 8 字节session
-        buf.writeInt(110);
-        buf.writeInt(0);
-        //消息id
-        buf.writeInt(protoId);
-        //压缩标志
-        buf.writeByte(0);
-        //版本
-        buf.writeByte(3);
         byte[] byteArray = null;
-        if (protoId == 1) {
-            MSG.LoginRequest loginRequest = MSG.LoginRequest.newBuilder()
-                    .setUsername("大号" + message)
-                    .setPassword("123456" + message)
-                    .buildPartial();
-            byteArray = loginRequest.toByteArray();
-        }else if (protoId == 2){
-            MSG.FriendRequest friendRequest = MSG.FriendRequest.newBuilder()
-                    .setUserId(1313L)
+        byte zip = 0;
+        byte encrypted = 0;
+        ByteBuf buf = null;
+        if (protoId == 4) {
+            for (int i = 0; i < 10000; i++) {
+                Login.LoginReq loginRequest = Login.LoginReq.newBuilder()
+                        .setAccount(message)
+                        .setPwd("123456")
+                        .buildPartial();
+                byteArray = loginRequest.toByteArray();
+                buildClientMsgAndSend(1, 0, protoId, zip, encrypted, byteArray);
+            }
+        } else if (protoId == 20) {
+            Friend.FriendRequest friendRequest = Friend.FriendRequest.newBuilder()
+                    .setUserId(Long.valueOf(message))
                     .buildPartial();
             byteArray = friendRequest.toByteArray();
+            buildClientMsgAndSend(1, 0, protoId, zip, encrypted, byteArray);
         }
 
+    }
 
-        int length = byteArray.length;
-        buf.writeShort(length);
+    public ByteBuf buildClientMsgAndSend(int cid, int errorCode, int protocolId, byte zip, byte encrypted, byte[] body) {
+        int length = body.length;
+        //写回
+        ByteBuf out = Unpooled.buffer(16 + length);
+        //消息头
+        out.writeInt(cid);      // 4字节
+        out.writeInt(errorCode);   // 4字节
+        out.writeInt(protocolId);  // 4字节
+        out.writeByte(zip);         // zip压缩标志，1字节
+        out.writeByte(encrypted);  // 加密标志，1字节
         //消息体
-        buf.writeBytes(byteArray);
+        out.writeShort(length);   // 消息体长度，2字节
+        // 写入消息体
+        if (body != null) {
+            out.writeBytes(body);
+        }
 
         // ... 构建消息的代码 ...
-        channel.writeAndFlush(buf).addListener(future -> {
+        channel.writeAndFlush(out).addListener(future -> {
             if (future.isSuccess()) {
                 System.out.println("客户端消息发送成功");
             } else {
                 System.out.println("客户端消息发送失败: " + future.cause().getMessage());
             }
         });
+        return out;
     }
 
     public static void main(String[] args) throws Exception {

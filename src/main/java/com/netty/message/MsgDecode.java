@@ -1,7 +1,5 @@
-package com.example.nettyclient.netty;
+package com.netty.message;
 
-import com.example.nettyclient.netty.message.ByteBufferMessage;
-import com.example.nettyclient.netty.pb.MSG;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
