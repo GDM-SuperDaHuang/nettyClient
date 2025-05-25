@@ -3,17 +3,12 @@ package com.netty.message;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import org.springframework.stereotype.Component;
-
-
-import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
  * 注意确保之前的包完整性
  */
 //@ChannelHandler.Sharable
-@Component
 public class MsgDecode extends ByteToMessageDecoder {
 
     //入
@@ -33,7 +28,7 @@ public class MsgDecode extends ByteToMessageDecoder {
 
         int protocolId = in.readInt();
         byte zip = in.readByte();
-        byte pbVersion = in.readByte();
+        byte encrypted = in.readByte();
         short length = in.readShort();
         // 检查是否有足够的字节来读取整个消息体
         if (readableBytes < 16 + length) {
@@ -41,12 +36,9 @@ public class MsgDecode extends ByteToMessageDecoder {
             in.readerIndex(in.readerIndex() - 16);
             return;
         }
-        ByteBuf messageBody = in.readBytes(length);
-        ByteBuffer byteBuffer = messageBody.nioBuffer();
-        ByteBufferMessage byteBufferMessage = new ByteBufferMessage(cid, errorCode, protocolId, byteBuffer);
-        out.add(byteBufferMessage);
-        //释放 messageBody 的引用
-        messageBody.release();
+        // 零拷贝切片（引用计数+1）
+        ByteBuf body = in.readRetainedSlice(length);
+        out.add(ByteBufferMessage.newInstance(cid, errorCode, protocolId, zip, encrypted, length, body));
     }
 
 

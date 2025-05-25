@@ -1,17 +1,12 @@
-package com.netty;
-
-
-import com.netty.message.ByteBufferMessage;
+package com.netty.message;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.DecoderException;
 import message.Friend;
 import message.Login;
-
 import java.net.SocketException;
 
 public class Myhandle extends SimpleChannelInboundHandler<ByteBufferMessage> {
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ByteBufferMessage msg) throws Exception {
         System.out.println("------------收到数据::::--------------" + msg);
@@ -23,11 +18,12 @@ public class Myhandle extends SimpleChannelInboundHandler<ByteBufferMessage> {
         }
 
         if (protocolId == 4) {
-            Login.LoginResp loginResponse = Login.LoginResp.parseFrom(msg.getByteBuffer());
+
+            Login.LoginResp loginResponse = Login.LoginResp.parseFrom(msg.getBody().nioBuffer());
             System.out.println(loginResponse);
         }
         if (protocolId == 20) {
-            Friend.FriendsResponse friendsResponse = Friend.FriendsResponse.parseFrom(msg.getByteBuffer());
+            Friend.FriendsResponse friendsResponse = Friend.FriendsResponse.parseFrom(msg.getBody().nioBuffer());
             System.out.println(friendsResponse);
         }
 

@@ -1,8 +1,7 @@
 package com.netty.test;
 
 import com.netty.message.MsgDecode;
-import com.netty.message.MsgEncode;
-import com.netty.Myhandle;
+import com.netty.message.Myhandle;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -15,8 +14,8 @@ import message.Login;
 
 import java.util.Scanner;
 
-public class Trr {
-    Channel channel;
+public class TestClient {
+    public Channel channel;
     int serverPort = 8888;
 
     public void start() throws Exception {
@@ -30,7 +29,6 @@ public class Trr {
                         ChannelPipeline p = ch.pipeline();
 //                        p.addLast("log", new LoggingHandler(LogLevel.INFO));
                         p.addLast(new MsgDecode());
-                        p.addLast(new MsgEncode());
                         p.addLast(new Myhandle());
                     }
                 });
@@ -65,7 +63,7 @@ public class Trr {
         }
     }
 
-    private void sendMsg(int protoId, String message) {
+    public void sendMsg(int protoId, String message) {
         byte[] byteArray = null;
         byte zip = 0;
         byte encrypted = 0;
@@ -91,7 +89,6 @@ public class Trr {
         }
 
     }
-
     public ByteBuf buildClientMsgAndSend(int cid, int errorCode, int protocolId, byte zip, byte encrypted, byte[] body) {
         int length = body.length;
         //写回
@@ -120,7 +117,4 @@ public class Trr {
         return out;
     }
 
-    public static void main(String[] args) throws Exception {
-        new Trr().start();
-    }
 }
