@@ -14,9 +14,9 @@ public class Myhandle extends SimpleChannelInboundHandler<ByteBufferMessage> {
         int errorCode = msg.getErrorCode();
         if (errorCode != 0) {
             System.out.println("------------错误码!!!--------------" + msg+"错误码:"+errorCode);
+            msg.recycle();
             return;
         }
-
         if (protocolId == 4) {
 
             Login.LoginResp loginResponse = Login.LoginResp.parseFrom(msg.getBody().nioBuffer());
@@ -26,7 +26,7 @@ public class Myhandle extends SimpleChannelInboundHandler<ByteBufferMessage> {
             Friend.FriendsResponse friendsResponse = Friend.FriendsResponse.parseFrom(msg.getBody().nioBuffer());
             System.out.println(friendsResponse);
         }
-
+        msg.recycle();
     }
 
     @Override
